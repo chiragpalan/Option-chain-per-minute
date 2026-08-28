@@ -1,0 +1,11 @@
+git+https://github.com/rongardF/tvdatafeed.git
+yfinance
+pandas==1.5.3
+numpy==1.23.5
+pytz==2023.3
+ta==0.11.0
+python-dotenv
+scipy
+nselib
+nsepython
+py_vollib
