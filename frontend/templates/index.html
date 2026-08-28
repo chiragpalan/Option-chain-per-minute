@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TradeSense Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#222;font-size:13px;}
+
+/* Nav */
+.nav{background:#fff;border-bottom:1px solid #e0e0e0;padding:0 20px;height:50px;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.nav .logo{font-size:18px;font-weight:800;color:#00b386;}
+.nav-tab{padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:500;color:#666;transition:.15s;}
+.nav-tab:hover,.nav-tab.active{background:#e6f7f1;color:#00b386;font-weight:600;}
+
+/* Page */
+.page{display:none;padding:16px 20px;max-width:1400px;margin:0 auto;}
+.page.active{display:block;}
+
+/* Cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:16px;}
+.card{background:#fff;border-radius:10px;padding:14px;border:1px solid #eee;cursor:pointer;transition:.15s;}
+.card:hover{box-shadow:0 2px 10px rgba(0,179,134,.15);border-color:#00b386;}
+.card .sym{font-weight:700;font-size:13px;}
+.card .price{font-size:20px;font-weight:800;margin:4px 0;}
+.card .chg.up{color:#00b386;font-size:12px;font-weight:600;}
+.card .chg.dn{color:#e74c3c;font-size:12px;font-weight:600;}
+.card .meta{display:flex;gap:6px;margin-top:6px;align-items:center;}
+.badge{font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;}
+.badge.BUY{background:#e6f7f1;color:#00b386;}
+.badge.SELL{background:#fdecea;color:#e74c3c;}
+.badge.HOLD{background:#fff8e1;color:#f59e0b;}
+.card .stats{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;color:#888;font-size:11px;margin-top:8px;}
+.card .stats b{color:#333;}
+
+/* Controls */
+.bar{background:#fff;border-radius:8px;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;border:1px solid #ccc;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.bar label{font-size:12px;color:#555;font-weight:600;}
+.bar select,.bar input[type=date]{padding:6px 10px;border:1px solid #bbb;border-radius:6px;font-size:13px;outline:none;cursor:pointer;background:#fff;min-width:130px;}
+.bar select:focus,.bar input:focus{border-color:#00b386;}
+.btn{padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;}
+.btn-g{background:#00b386;color:#fff;}
+.btn-g:hover{background:#009970;}
+.ml-auto{margin-left:auto;color:#aaa;font-size:11px;}
+
+/* Option chain */
+.oc-box{background:#fff;border-radius:10px;border:1px solid #eee;overflow:hidden;}
+.oc-top{padding:12px 16px;border-bottom:1px solid #eee;display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+.oc-spot{font-size:15px;font-weight:700;}
+.oc-spot span{color:#00b386;font-size:18px;font-weight:800;}
+.oc-atm{color:#b45309;font-weight:700;}
+.exp-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.exp-tab{padding:4px 11px;border-radius:20px;border:1px solid #ddd;cursor:pointer;font-size:12px;font-weight:500;color:#555;transition:.15s;}
+.exp-tab:hover{border-color:#00b386;color:#00b386;}
+.exp-tab.active{background:#00b386;color:#fff;border-color:#00b386;}
+.oc-scroll{overflow-x:auto;}
+table.oc{width:100%;border-collapse:collapse;font-size:12px;}
+table.oc thead th{padding:8px 8px;text-align:center;font-weight:600;color:#666;background:#fafafa;border-bottom:2px solid #eee;white-space:nowrap;}
+table.oc thead th.ch{color:#00b386;}
+table.oc thead th.ph{color:#e74c3c;}
+table.oc thead th.sh{background:#f0f0f0;color:#333;}
+table.oc tbody tr{border-bottom:1px solid #f5f5f5;}
+table.oc tbody tr:hover{background:#f9fffe;}
+table.oc tbody td{padding:6px 8px;text-align:right;white-space:nowrap;}
+table.oc tbody td.sc{text-align:center;font-weight:700;background:#fafafa;border-left:1px solid #eee;border-right:1px solid #eee;}
+table.oc tbody tr.atm td{background:#fffbea!important;}
+table.oc tbody tr.atm td.sc{background:#fff3cd!important;color:#b45309;}
+.atm-pill{background:#f59e0b;color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;margin-left:3px;vertical-align:middle;}
+.bar-wrap{display:flex;align-items:center;gap:3px;}
+.oi-bar{height:5px;border-radius:3px;min-width:1px;}
+.oi-bar.c{background:#00b386;}
+.oi-bar.p{background:#e74c3c;}
+td.c-oi{color:#00b386;}
+td.p-oi{color:#e74c3c;}
+
+/* Greeks row */
+table.oc tbody tr.greeks-row td{background:#f8fff8;font-size:11px;color:#555;padding:3px 8px;}
+
+/* History */
+.hist-box{background:#fff;border-radius:10px;border:1px solid #eee;overflow:hidden;}
+.hist-hdr{padding:10px 14px;border-bottom:1px solid #eee;font-weight:700;font-size:14px;display:flex;align-items:center;}
+.hist-hdr span{margin-left:auto;font-size:11px;color:#aaa;font-weight:400;}
+table.hist{width:100%;border-collapse:collapse;font-size:12px;}
+table.hist thead th{padding:8px 12px;text-align:left;background:#fafafa;color:#666;font-weight:600;border-bottom:1px solid #eee;}
+table.hist tbody tr{border-bottom:1px solid #f5f5f5;}
+table.hist tbody tr:hover{background:#f9fffe;}
+table.hist tbody td{padding:6px 12px;}
+.up{color:#00b386;font-weight:600;}
+.dn{color:#e74c3c;font-weight:600;}
+
+/* Loader */
+.loader{text-align:center;padding:40px;color:#aaa;}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid #eee;border-top-color:#00b386;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.empty{text-align:center;padding:32px;color:#aaa;}
+.err{color:#e74c3c;padding:16px;text-align:center;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="logo">📈 TradeSense</div>
+  <div class="nav-tab active" id="tab-options" onclick="showPage('options',this)">Option Chain</div>
+  <div class="nav-tab"        id="tab-greeks"  onclick="showPage('greeks',this)">Greeks</div>
+  <div class="nav-tab"        id="tab-history" onclick="showPage('history',this)">History</div>
+</nav>
+
+<!-- OPTION CHAIN -->
+<div class="page active" id="page-options">
+  <div class="bar">
+    <div><label>Symbol &nbsp;</label>
+      <select id="oc-sym" onchange="loadExpiries()">
+        <option value="NIFTY50">NIFTY 50</option>
+      </select>
+    </div>
+    <div><label>Expiry &nbsp;</label>
+      <select id="oc-expiry" onchange="onExpiryChange()">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+    <button class="btn btn-g" onclick="loadOC()">🔄 Refresh</button>
+    <span class="ml-auto" id="oc-ts"></span>
+  </div>
+  <div class="oc-box" id="oc-box"><div class="loader"><span class="spin"></span>Loading expiries...</div></div>
+</div>
+
+<!-- GREEKS -->
+<div class="page" id="page-greeks">
+  <div class="bar">
+    <div><label>Symbol &nbsp;</label>
+      <select id="gk-sym" onchange="loadGreeksExpiries()">
+        <option value="NIFTY50">NIFTY 50</option>
+      </select>
+    </div>
+    <div><label>Expiry &nbsp;</label>
+      <select id="gk-expiry" onchange="loadGreeks()"><option value="">Loading...</option></select>
+    </div>
+    <button class="btn btn-g" onclick="loadGreeks()">🔄 Refresh</button>
+    <span class="ml-auto" id="gk-ts"></span>
+  </div>
+  <div id="gk-box"><div class="loader"><span class="spin"></span>Loading...</div></div>
+</div>
+
+<!-- HISTORY -->
+<div class="page" id="page-history">
+  <div class="bar">
+    <div><label>Symbol &nbsp;</label>
+      <select id="h-sym" onchange="loadDates()">
+        <option value="NIFTY50">NIFTY 50</option>
+      </select>
+    </div>
+    <div><label>Date &nbsp;</label>
+      <select id="h-date" onchange="loadHist()"><option value="">— All —</option></select>
+    </div>
+    <div><label>Interval &nbsp;</label>
+      <select id="h-int" onchange="loadHist()">
+        <option value="1">1 min</option>
+        <option value="5">5 min</option>
+        <option value="15">15 min</option>
+      </select>
+    </div>
+  </div>
+  <div class="hist-box" id="hist-box"><div class="loader"><span class="spin"></span>Select symbol and date...</div></div>
+</div>
+
+<script>
+// ── Utils ────────────────────────────────────────────────────
+const f2 = v => v==null?'—':Number(v).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fi = v => v==null?'—':Number(v).toLocaleString('en-IN',{maximumFractionDigits:0});
+const fp = v => v==null?'—':Number(v).toFixed(2)+'%';
+const pct = v => v==null?'':((v>=0?'+':'')+Number(v).toFixed(2)+'%');
+
+async function api(url){
+  const r = await fetch(url);
+  const d = await r.json();
+  if(!r.ok) throw new Error(d.error||r.statusText);
+  return d;
+}
+
+// ── Nav ──────────────────────────────────────────────────────
+function showPage(name, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='options') loadExpiries();
+  if(name==='greeks')  loadGreeksExpiries();
+  if(name==='history') loadDates();
+}
+
+// ══════════════════════════════════════════════════
+// OPTION CHAIN
+// ══════════════════════════════════════════════════
+let _expiries=[], _activeExp='';
+
+function _fmtExpiry(e){
+  // '23-Jun-2026' -> '23 Jun 2026'
+  try{ const [d,m,y]=e.split('-'); return `${parseInt(d)} ${m} ${y}`; }
+  catch(_){ return e; }
+}
+
+async function loadExpiries(){
+  const sym=document.getElementById('oc-sym').value;
+  document.getElementById('oc-box').innerHTML='<div class="loader"><span class="spin"></span>Loading expiries...</div>';
+  try{
+    _expiries = await api(`/api/expiries?symbol=${sym}`);
+    const sel=document.getElementById('oc-expiry');
+    sel.innerHTML=_expiries.map(e=>`<option value="${e}">${_fmtExpiry(e)}</option>`).join('');
+    _activeExp=_expiries[0]||'';
+    loadOC();
+  }catch(e){
+    document.getElementById('oc-box').innerHTML=`<div class="err">Failed to load expiries: ${e.message}</div>`;
+  }
+}
+
+function onExpiryChange(){
+  _activeExp=document.getElementById('oc-expiry').value;
+  loadOC();
+}
+
+async function loadOC(){
+  const sym=document.getElementById('oc-sym').value;
+  const el=document.getElementById('oc-box');
+  el.innerHTML='<div class="loader"><span class="spin"></span>Fetching option chain...</div>';
+  try{
+    const data=await api(`/api/option-chain?symbol=${sym}&expiry=${encodeURIComponent(_activeExp)}`);
+    renderOC(data);
+    document.getElementById('oc-ts').textContent='Updated: '+new Date().toLocaleTimeString('en-IN');
+  }catch(e){
+    el.innerHTML=`<div class="err">⚠️ ${e.message}</div>`;
+  }
+}
+
+function renderOC(data){
+  const {spot,atm,rows,symbol,expiry}=data;
+  const el=document.getElementById('oc-box');
+  if(!rows||!rows.length){el.innerHTML='<div class="empty">No data for this expiry.</div>';return;}
+
+  const maxOI=Math.max(...rows.map(r=>Math.max(r.CE?.oi||0,r.PE?.oi||0)),1);
+
+  const tbody=rows.map(r=>{
+    const isAtm=r.strike===atm;
+    const ce=r.CE||{}, pe=r.PE||{};
+    const cw=Math.round((ce.oi||0)/maxOI*50), pw=Math.round((pe.oi||0)/maxOI*50);
+    return `<tr class="${isAtm?'atm':''}">
+      <td class="c-oi"><div class="bar-wrap" style="justify-content:flex-end">
+        <span>${fi(ce.oi)}</span><div class="oi-bar c" style="width:${cw}px"></div>
+      </div></td>
+      <td>${fi(ce.oiChg)}</td>
+      <td>${fi(ce.volume)}</td>
+      <td>${fp(ce.iv)}</td>
+      <td><b>${f2(ce.ltp)}</b></td>
+      <td>${f2(ce.delta)}</td>
+      <td>${f2(ce.theta)}</td>
+      <td>${f2(ce.vega)}</td>
+      <td class="sc">${r.strike}${isAtm?'<span class="atm-pill">ATM</span>':''}</td>
+      <td>${f2(pe.delta)}</td>
+      <td>${f2(pe.theta)}</td>
+      <td>${f2(pe.vega)}</td>
+      <td><b>${f2(pe.ltp)}</b></td>
+      <td>${fp(pe.iv)}</td>
+      <td>${fi(pe.volume)}</td>
+      <td>${fi(pe.oiChg)}</td>
+      <td class="p-oi"><div class="bar-wrap">
+        <div class="oi-bar p" style="width:${pw}px"></div><span>${fi(pe.oi)}</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML=`
+  <div class="oc-top">
+    <div class="oc-spot">${symbol} &nbsp; Spot: <span>${f2(spot)}</span>
+      &nbsp;|&nbsp; <span class="oc-atm">ATM: ${atm}</span>
+      &nbsp;|&nbsp; <span style="color:#888;font-size:12px;">Expiry: ${_fmtExpiry(expiry)}</span>
+      &nbsp;|&nbsp; <span style="color:#888;font-size:11px;">📅 EOD data</span>
+    </div>
+  </div>
+  <div class="oc-scroll">
+    <table class="oc">
+      <thead>
+        <tr>
+          <th class="ch" colspan="8">── CALL (CE) ──</th>
+          <th class="sh">STRIKE</th>
+          <th class="ph" colspan="8">── PUT (PE) ──</th>
+        </tr>
+        <tr>
+          <th class="ch">OI</th><th class="ch">ΔOI</th><th class="ch">Vol</th>
+          <th class="ch">IV%</th><th class="ch">LTP</th>
+          <th class="ch">Δ</th><th class="ch">Θ</th><th class="ch">ν</th>
+          <th class="sh">Strike</th>
+          <th class="ph">Δ</th><th class="ph">Θ</th><th class="ph">ν</th>
+          <th class="ph">LTP</th><th class="ph">IV%</th>
+          <th class="ph">Vol</th><th class="ph">ΔOI</th><th class="ph">OI</th>
+        </tr>
+      </thead>
+      <tbody>${tbody}</tbody>
+    </table>
+  </div>`;
+
+  setTimeout(()=>{
+    const atm_row=el.querySelector('tr.atm');
+    if(atm_row) atm_row.scrollIntoView({block:'center',behavior:'smooth'});
+  },150);
+}
+
+// ══════════════════════════════════════════════════
+// GREEKS
+// ══════════════════════════════════════════════════
+let _gkExpiries=[], _gkActiveExp='';
+
+async function loadGreeksExpiries(){
+  const sym=document.getElementById('gk-sym').value;
+  document.getElementById('gk-box').innerHTML='<div class="loader"><span class="spin"></span>Loading expiries...</div>';
+  try{
+    _gkExpiries=await api(`/api/expiries?symbol=${sym}`);
+    const sel=document.getElementById('gk-expiry');
+    sel.innerHTML=_gkExpiries.map(e=>`<option value="${e}">${_fmtExpiry(e)}</option>`).join('');
+    _gkActiveExp=_gkExpiries[0]||'';
+    loadGreeks();
+  }catch(e){
+    document.getElementById('gk-box').innerHTML=`<div class="err">Failed to load expiries: ${e.message}</div>`;
+  }
+}
+
+async function loadGreeks(){
+  const sym=document.getElementById('gk-sym').value;
+  _gkActiveExp=document.getElementById('gk-expiry').value;
+  const el=document.getElementById('gk-box');
+  el.innerHTML='<div class="loader"><span class="spin"></span>Fetching Greeks...</div>';
+  try{
+    const data=await api(`/api/option-chain?symbol=${sym}&expiry=${encodeURIComponent(_gkActiveExp)}`);
+    renderGreeks(data);
+    document.getElementById('gk-ts').textContent='Updated: '+new Date().toLocaleTimeString('en-IN');
+  }catch(e){
+    el.innerHTML=`<div class="err">⚠️ ${e.message}</div>`;
+  }
+}
+
+function renderGreeks(data){
+  const {spot,atm,rows,symbol,expiry}=data;
+  const el=document.getElementById('gk-box');
+  if(!rows||!rows.length){el.innerHTML='<div class="empty">No data for this expiry.</div>';return;}
+
+  const mkRow=(r,otype)=>{
+    const o=r[otype]||{};
+    if(!o.ltp)return '';
+    const isAtm=r.strike===atm;
+    return `<tr class="${isAtm?'atm':''}">
+      <td class="sc">${r.strike}${isAtm?'<span class="atm-pill">ATM</span>':''}</td>
+      <td><b>${otype}</b></td>
+      <td><b>${f2(o.ltp)}</b></td>
+      <td>${fp(o.iv)}</td>
+      <td style="color:#3b82f6">${f2(o.delta)}</td>
+      <td style="color:#8b5cf6">${f2(o.gamma)}</td>
+      <td style="color:#f59e0b">${f2(o.theta)}</td>
+      <td style="color:#10b981">${f2(o.vega)}</td>
+      <td style="color:#ef4444">${f2(o.rho)}</td>
+    </tr>`;
+  };
+
+  const tbody=rows.map(r=>mkRow(r,'CE')+mkRow(r,'PE')).join('');
+
+  el.innerHTML=`
+  <div class="oc-box">
+    <div class="oc-top">
+      <div class="oc-spot">${symbol} &nbsp; Spot: <span>${f2(spot)}</span>
+        &nbsp;|&nbsp; <span class="oc-atm">ATM: ${atm}</span>
+        &nbsp;|&nbsp; <span style="color:#888;font-size:12px;">Expiry: ${_fmtExpiry(expiry)}</span>
+      </div>
+    </div>
+    <div class="oc-scroll">
+      <table class="oc">
+        <thead><tr>
+          <th class="sh">Strike</th><th class="sh">Type</th><th class="sh">LTP</th><th class="sh">IV%</th>
+          <th style="color:#3b82f6">Delta (Δ)</th>
+          <th style="color:#8b5cf6">Gamma (Γ)</th>
+          <th style="color:#f59e0b">Theta (Θ)</th>
+          <th style="color:#10b981">Vega (ν)</th>
+          <th style="color:#ef4444">Rho (ρ)</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  setTimeout(()=>{
+    const atm_row=el.querySelector('tr.atm');
+    if(atm_row) atm_row.scrollIntoView({block:'center',behavior:'smooth'});
+  },150);
+}
+
+// ══════════════════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════════════════
+async function loadDates(){
+  const sym=document.getElementById('h-sym').value;
+  const sel=document.getElementById('h-date');
+  sel.innerHTML='<option value="">— All —</option>';
+  try{
+    const dates=await api(`/api/dates?symbol=${sym}`);
+    dates.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;sel.appendChild(o);});
+    if(dates.length) sel.value=dates[0];
+    loadHist();
+  }catch(e){}
+}
+
+async function loadHist(){
+  const sym=document.getElementById('h-sym').value;
+  const dt=document.getElementById('h-date').value;
+  const iv=document.getElementById('h-int').value;
+  const el=document.getElementById('hist-box');
+  el.innerHTML='<div class="loader"><span class="spin"></span>Loading...</div>';
+  try{
+    const rows=await api(`/api/history?symbol=${sym}&date=${dt}&interval=${iv}`);
+    if(!rows.length){
+      el.innerHTML='<div class="hist-hdr">📅 Price History</div><div class="empty">No data. Run <code>python -m src.main</code> first.</div>';
+      return;
+    }
+    renderHist(rows,sym,dt,iv);
+  }catch(e){el.innerHTML=`<div class="err">Error: ${e.message}</div>`;}
+}
+
+function renderHist(rows,sym,dt,iv){
+  const el=document.getElementById('hist-box');
+  const tbody=rows.map((r,i)=>{
+    const prev=i>0?rows[i-1].close:r.open;
+    const isUp=r.close>=prev;
+    const chg=r.close-prev;
+    const chgPct=prev?((chg/prev)*100):0;
+    const sig=r.signal||'HOLD';
+    return `<tr>
+      <td><b>${(r.datetime||'').slice(11,16)}</b></td>
+      <td>${f2(r.open)}</td>
+      <td style="color:#00b386">${f2(r.high)}</td>
+      <td style="color:#e74c3c">${f2(r.low)}</td>
+      <td class="${isUp?'up':'dn'}"><b>${f2(r.close)}</b></td>
+      <td class="${isUp?'up':'dn'}">${isUp?'▲':'▼'} ${Math.abs(chg).toFixed(2)} (${chgPct.toFixed(2)}%)</td>
+      <td>${fi(r.volume)}</td>
+      <td><span class="badge ${sig}">${sig}</span></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML=`
+  <div class="hist-hdr">
+    📅 ${sym} &nbsp;|&nbsp; ${dt||'All'} &nbsp;|&nbsp; ${iv} min
+    <span>${rows.length} candles</span>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="hist">
+      <thead><tr>
+        <th>Time (IST)</th><th>Open</th><th>High</th><th>Low</th>
+        <th>Close</th><th>Change</th><th>Volume</th><th>Signal</th>
+      </tr></thead>
+      <tbody>${tbody}</tbody>
+    </table>
+  </div>`;
+}
+
+// ── Init ─────────────────────────────────────────────────────
+loadExpiries();
+</script>
+</body>
+</html>

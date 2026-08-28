@@ -1,0 +1,5 @@
+{
+    "Indexes": [
+        {"label": "NIFTY50", "tv_symbol": "NIFTY", "exchange": "NSE", "yf_ticker": "^NSEI", "vol_etf": "NIFTYBEES.NS"}
+    ]
+}
